@@ -1,0 +1,171 @@
+import java.util.*;
+
+// Book class
+class Book {
+    int id;
+    String title;
+    String author;
+    String genre;
+    double rating;
+
+    Book(int id, String title, String author, String genre, double rating) {
+        this.id = id;
+        this.title = title;
+        this.author = author;
+        this.genre = genre;
+        this.rating = rating;
+    }
+}
+
+// User class
+class User {
+    int id;
+    String name;
+    Map<Integer, Integer> ratedBooks; // bookId -> rating
+
+    User(int id, String name) {
+        this.id = id;
+        this.name = name;
+        this.ratedBooks = new HashMap<>();
+    }
+
+    void rateBook(int bookId, int rating) {
+        ratedBooks.put(bookId, rating);
+    }
+}
+
+// Recommendation System
+class RecommendationSystem {
+
+    List<Book> books;
+    List<User> users;
+
+    RecommendationSystem() {
+        books = new ArrayList<>();
+        users = new ArrayList<>();
+    }
+
+    // Add sample data
+    void addSampleData() {
+        books.add(new Book(1, "Harry Potter", "J.K. Rowling", "Fantasy", 4.8));
+        books.add(new Book(2, "The Hobbit", "J.R.R. Tolkien", "Fantasy", 4.7));
+        books.add(new Book(3, "Atomic Habits", "James Clear", "Self-help", 4.6));
+        books.add(new Book(4, "Rich Dad Poor Dad", "Robert Kiyosaki", "Finance", 4.5));
+        books.add(new Book(5, "The Alchemist", "Paulo Coelho", "Fiction", 4.4));
+
+        User u1 = new User(1, "Alice");
+        u1.rateBook(1, 5);
+        u1.rateBook(2, 4);
+
+        User u2 = new User(2, "Bob");
+        u2.rateBook(1, 5);
+        u2.rateBook(3, 5);
+
+        User u3 = new User(3, "Charlie");
+        u3.rateBook(2, 4);
+        u3.rateBook(4, 5);
+
+        users.add(u1);
+        users.add(u2);
+        users.add(u3);
+    }
+
+    // Recommend by Genre
+    void recommendByGenre(String genre) {
+        System.out.println("\n📚 Genre Recommendations: " + genre);
+        for (Book b : books) {
+            if (b.genre.equalsIgnoreCase(genre)) {
+                System.out.println(b.title + " by " + b.author + " ⭐" + b.rating);
+            }
+        }
+    }
+
+    // Recommend Top Rated Books
+    void recommendTopRated() {
+        System.out.println("\n🔥 Top Rated Books:");
+
+        books.stream()
+                .sorted((a, b) -> Double.compare(b.rating, a.rating))
+                .limit(3)
+                .forEach(b -> System.out.println(b.title + " ⭐" + b.rating));
+    }
+
+    // Find similar users
+    User findSimilarUser(User currentUser) {
+        User similar = null;
+        int maxCommon = 0;
+
+        for (User u : users) {
+            if (u.id == currentUser.id) continue;
+
+            int common = 0;
+            for (Integer bookId : currentUser.ratedBooks.keySet()) {
+                if (u.ratedBooks.containsKey(bookId)) {
+                    common++;
+                }
+            }
+
+            if (common > maxCommon) {
+                maxCommon = common;
+                similar = u;
+            }
+        }
+
+        return similar;
+    }
+
+    // Collaborative Recommendation
+    void recommendCollaborative(User user) {
+        User similar = findSimilarUser(user);
+
+        if (similar == null) {
+            System.out.println("No similar users found.");
+            return;
+        }
+
+        System.out.println("\n🤝 Recommended based on similar user (" + similar.name + "):");
+
+        for (Integer bookId : similar.ratedBooks.keySet()) {
+            if (!user.ratedBooks.containsKey(bookId)) {
+                Book b = getBookById(bookId);
+                if (b != null) {
+                    System.out.println(b.title + " by " + b.author);
+                }
+            }
+        }
+    }
+
+    // Helper method
+    Book getBookById(int id) {
+        for (Book b : books) {
+            if (b.id == id) return b;
+        }
+        return null;
+    }
+}
+
+// Main class
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        RecommendationSystem system = new RecommendationSystem();
+        system.addSampleData();
+
+        System.out.println("📚 Welcome to Library Recommendation System");
+
+        System.out.print("Enter your favorite genre: ");
+        String genre = sc.nextLine();
+        system.recommendByGenre(genre);
+
+        system.recommendTopRated();
+
+        // Create a new user
+        User currentUser = new User(99, "You");
+        currentUser.rateBook(1, 5); // example user rating
+
+        system.recommendCollaborative(currentUser);
+
+        sc.close();
+    }
+}
